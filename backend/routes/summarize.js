@@ -35,7 +35,7 @@ router.post('/:docId', async (req,res)=>{
     console.error('AI error', err && (err.response?.data || err.message));
     const lines = text.split('\n').map(s => s.trim()).filter(Boolean);
     const firstLines = lines.slice(0, 6).join('\n');
-    res.json({ summary: `Quick student-summary:\n${firstLines}\n\n(Summary generated)` });
+    res.json({ summary:`Quick student-summary:\n${firstLines}\n\n(Summary generated) ⁠`});
   }
 });
 

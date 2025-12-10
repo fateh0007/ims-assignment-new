@@ -1,11 +1,16 @@
 // backend/utils/aiClient.js
 const axios = require("axios");
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;  
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "models/gemini-pro";  
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+// Prefer a current, available model; strip any accidental leading "models/".
+const GEMINI_MODEL = (process.env.GEMINI_MODEL || "gemini-1.5-flash-latest").replace(/^models\//, "");
 
 async function generateSummary(text) {
   try {
+    if (!GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY");
+    }
+
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
     const body = {
@@ -14,15 +19,17 @@ async function generateSummary(text) {
           parts: [
             {
               text:
-                "Summarize the following text in 6 short bullet points:\n\n" +
-                text.slice(0, 60000) // limit size
+                "Summarize the following text as one clear paragraph of about 120-180 words. " +
+                "Write at least 4 full sentences, no bullet points, no headings. " +
+                "Cover the key points with a concise, coherent flow:\n\n" +
+                text.slice(0, 600000) // limit size
             }
           ]
         }
       ],
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 400
+        temperature: 0.3,
+        maxOutputTokens: 700
       }
     };
 

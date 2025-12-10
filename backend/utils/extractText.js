@@ -10,6 +10,7 @@ function tryRequire(name) {
 }
 
 let pdfParseFn = null;
+let mammoth = null;
 
 const candidates = [
   'pdf-parse',
@@ -42,6 +43,13 @@ if (!pdfParseFn) {
   if (pdfjs) {
     pdfjs = pdfjs.default || pdfjs;
   }
+}
+
+// Optional DOCX extractor
+try {
+  mammoth = require('mammoth');
+} catch (e) {
+  mammoth = null;
 }
 
 async function extractTextFromFile(filePath, mime) {
@@ -84,10 +92,22 @@ async function extractTextFromFile(filePath, mime) {
       }
     }
 
-    throw new Error('No PDF parser available. Install pdf-parse or pdfjs-dist (see README).');
+    throw new Error('No PDF parser available. Please install pdf-parse or pdfjs-dist.');
   }
 
-  throw new Error('Unsupported file type for summarisation. Please upload a .txt or .pdf file for AI summarisation.');
+  if (ext === '.docx' || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (!mammoth) {
+      throw new Error('DOCX extraction unavailable. Please install the "mammoth" package.');
+    }
+    try {
+      const result = await mammoth.extractRawText({ path: filePath });
+      return (result && result.value) || '';
+    } catch (e) {
+      throw new Error('DOCX extraction failed: ' + e.message);
+    }
+  }
+
+  throw new Error('Unsupported file type for summarisation. Please upload a .txt, .pdf, or .docx file for AI summarisation.');
 }
 
 module.exports = { extractTextFromFile };
